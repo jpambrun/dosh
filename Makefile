@@ -12,45 +12,33 @@ all:
 	@eval $$(cat /etc/os*release); echo $$NAME
 
 .PHONY: doc
-doc: dsh.1.gz dmake.1.gz docker-clean.1.gz docker-archive.1.gz
+doc: dosh.1.gz
 
 .PHONY: install
 install:
 	install -d $(DESTDIR)$(PREFIX)/bin/
-	install -m 755 dsh dmake $(DESTDIR)$(PREFIX)/bin/
-	install -m 755 docker-clean docker-archive $(DESTDIR)$(PREFIX)/bin/
+	install -m 755 dosh $(DESTDIR)$(PREFIX)/bin/
 
 .PHONY: install-doc
 install-doc:
 	install -d $(DESTDIR)$(PREFIX)/share/man/man1/
-	install -m 644 dsh.1.gz dmake.1.gz docker-clean.1.gz \
-	               docker-archive.1.gz \
-	           $(DESTDIR)$(PREFIX)/share/man/man1/
+	install -m 644 dosh.1.gz $(DESTDIR)$(PREFIX)/share/man/man1/
 
 .PHONY: install-bash-completion
 install-bash-completion:
 	completionsdir=$$(pkg-config --variable=completionsdir bash-completion); \
 	if [ -n "$$completionsdir" ]; then \
 		install -d $(DESTDIR)$$completionsdir/; \
-		for bash in dsh dmake docker-clean docker-archive; do \
-			install -m 644 bash-completion/$$bash \
-			        $(DESTDIR)$$completionsdir/; \
-		done; \
+		install -m 644 bash-completion $(DESTDIR)$$completionsdir/dosh; \
 	fi
 
 .PHONY: uninstall
 uninstall:
-	for bin in dsh dmake docker-clean docker-archive; do \
-		rm -f $(DESTDIR)$(PREFIX)/bin/$$bin; \
-	done
-	for man in dsh.1.gz dmake.1.gz docker-clean.1.gz docker-archive.1.gz; do \
-		rm -f $(DESTDIR)$(PREFIX)/share/man/man1/$$man; \
-	done
+	rm -f $(DESTDIR)$(PREFIX)/bin/dosh
+	rm -f $(DESTDIR)$(PREFIX)/share/man/man1/dosh.1.gz
 	completionsdir=$$(pkg-config --variable=completionsdir bash-completion); \
 	if [ -n "$$completionsdir" ]; then \
-		for bash in dsh dmake docker-clean docker-archive; do \
-			rm -f $(DESTDIR)$$completionsdir/$$bash; \
-		done; \
+		rm -f $(DESTDIR)$$completionsdir/dosh; \
 	fi
 
 .PHONY: tests
@@ -58,20 +46,18 @@ tests:
 	@./tests.sh
 
 .PHONY: check
-check: dsh dmake docker-clean docker-archive
+check: dosh
 	shellcheck $^
 
 .PHONY: clean
 clean:
-	rm -f dsh.1.gz dmake.1.gz docker-clean.1.gz docker-archive.1.gz
+	rm -f dosh.1.gz
 	rm -f PKGBUILD*.aur master.tar.gz src/master.tar.gz *.pkg.tar.xz \
-	   -R src/docker-scripts-master/ pkg/docker-scripts/
+	   -R src/dosh-master/ pkg/dosh-scripts/
 
 .PHONY: aur
-aur: PKGBUILD.dsh.aur PKGBUILD.dmake.aur PKGBUILD.docker-scripts.aur
-	for pkgbuild in $^; do \
-		makepkg --force --nodeps -p $$pkgbuild; \
-	done
+aur: PKGBUILD.dosh.aur
+	makepkg --force --nodeps -p $^
 
 PKGBUILD%.aur: PKGBUILD%
 	cp $< $@.tmp
